@@ -8,39 +8,63 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-  :root {
-    --bg:#f7f5f0;--surface:#fff;--surface2:#f0ede7;
-    --border:rgba(0,0,0,0.08);--border-med:rgba(0,0,0,0.14);
-    --text:#1a1814;--text-muted:#7a7670;--text-hint:#b0ada8;
-    --green:#2d6a4f;--red:#9b2226;--blue:#1a4f8a;--blue-mid:#2563b0;
-    --radius:12px;--radius-sm:8px;
-  }
+  :root{--bg:#f7f5f0;--surface:#fff;--surface2:#f0ede7;--border:rgba(0,0,0,0.08);--border-med:rgba(0,0,0,0.14);--text:#1a1814;--text-muted:#7a7670;--text-hint:#b0ada8;--green:#2d6a4f;--red:#9b2226;--blue:#1a4f8a;--blue-mid:#2563b0;--radius:12px;--radius-sm:8px;}
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;}
-  #loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:14px;}
+
+  /* ── LOGIN SCREEN ── */
+  #login-screen{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:0;}
+  .login-brand{font-family:'DM Serif Display',serif;font-size:36px;color:var(--text);margin-bottom:8px;letter-spacing:-0.02em;}
+  .login-sub{font-size:13px;color:var(--text-hint);margin-bottom:48px;}
+  .profiles{display:flex;gap:16px;margin-bottom:0;}
+  .profile-btn{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:2rem 2.5rem;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;display:flex;flex-direction:column;align-items:center;gap:12px;min-width:140px;}
+  .profile-btn:hover{transform:translateY(-3px);border-color:var(--border-med);}
+  .profile-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:22px;color:#fff;}
+  .profile-name{font-size:15px;font-weight:500;color:var(--text);}
+
+  /* ── PIN SCREEN ── */
+  #pin-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:16px;}
+  .pin-title{font-family:'DM Serif Display',serif;font-size:24px;color:var(--text);}
+  .pin-sub{font-size:13px;color:var(--text-hint);margin-bottom:8px;}
+  .pin-dots{display:flex;gap:12px;margin-bottom:8px;}
+  .pin-dot{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--border-med);background:transparent;transition:background 0.15s;}
+  .pin-dot.filled{background:var(--text);border-color:var(--text);}
+  .pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:220px;}
+  .pin-key{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:16px;font-size:18px;font-weight:500;cursor:pointer;text-align:center;transition:background 0.1s,transform 0.1s;color:var(--text);}
+  .pin-key:hover{background:var(--surface2);}
+  .pin-key:active{transform:scale(0.95);}
+  .pin-error{font-size:13px;color:var(--red);height:18px;}
+  .pin-back{font-size:13px;color:var(--text-muted);cursor:pointer;margin-top:4px;background:none;border:none;font-family:'DM Sans',sans-serif;}
+  .pin-back:hover{color:var(--text);}
+
+  /* ── LOADING ── */
+  #loading-screen{position:fixed;inset:0;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:998;gap:14px;}
   #loading-screen .brand{font-family:'DM Serif Display',serif;font-size:32px;color:var(--text);}
   #loading-screen .sub{font-size:13px;color:var(--text-hint);}
   .spinner{width:24px;height:24px;border:2px solid var(--border-med);border-top-color:var(--text);border-radius:50%;animation:spin 0.7s linear infinite;}
   @keyframes spin{to{transform:rotate(360deg);}}
-  #config-banner{background:#fffbeb;border-bottom:1px solid #fcd34d;padding:10px 2rem;font-size:13px;color:#92400e;display:none;align-items:center;gap:8px;flex-wrap:wrap;}
-  #config-banner a{color:#92400e;font-weight:500;}
+
+  /* ── APP ── */
+  #app{display:none;}
   .topbar{background:var(--text);color:#fff;padding:0 2rem;height:56px;display:flex;align-items:center;justify-content:space-between;}
+  .topbar-left{display:flex;align-items:center;gap:12px;}
   .topbar-brand{font-family:'DM Serif Display',serif;font-size:20px;letter-spacing:-0.02em;}
-  .topbar-right{display:flex;align-items:center;gap:12px;}
+  .topbar-profile{font-size:12px;background:rgba(255,255,255,0.12);padding:3px 10px;border-radius:99px;color:rgba(255,255,255,0.8);}
+  .topbar-right{display:flex;align-items:center;gap:10px;}
   .topbar-meta{font-size:13px;color:rgba(255,255,255,0.5);text-transform:capitalize;}
   .sync-status{font-size:11px;padding:3px 9px;border-radius:99px;}
   .sync-ok{background:rgba(45,106,79,0.35);color:#86efb8;}
   .sync-err{background:rgba(155,34,38,0.35);color:#fca5a5;}
   .sync-loading{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.5);}
+  .btn-logout{background:none;border:0.5px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);font-family:'DM Sans',sans-serif;font-size:12px;padding:4px 10px;border-radius:99px;cursor:pointer;transition:all 0.15s;}
+  .btn-logout:hover{border-color:rgba(255,255,255,0.5);color:#fff;}
   .page{max-width:1100px;margin:0 auto;padding:2rem 1.5rem 4rem;}
   .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:2rem;}
   .metric{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);padding:1.25rem 1rem;transition:transform 0.15s;}
   .metric:hover{transform:translateY(-2px);}
   .metric .lbl{font-size:11px;font-weight:500;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;}
   .metric .val{font-family:'DM Serif Display',serif;font-size:26px;letter-spacing:-0.02em;}
-  .metric .val.green{color:var(--green);}
-  .metric .val.red{color:var(--red);}
-  .metric .val.blue{color:var(--blue);}
+  .metric .val.green{color:var(--green);} .metric .val.red{color:var(--red);} .metric .val.blue{color:var(--blue);}
   .saving-section{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius);margin-bottom:2rem;overflow:hidden;}
   .saving-header{background:var(--text);color:#fff;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;}
   .saving-header-title{font-family:'DM Serif Display',serif;font-size:18px;margin-bottom:2px;}
@@ -115,205 +139,307 @@
     .saving-actions{grid-template-columns:1fr;}
     .topbar{padding:0 1rem;}
     .page{padding:1.5rem 1rem 4rem;}
+    .profiles{flex-direction:column;}
   }
 </style>
 </head>
 <body>
 
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-brand">Finanzas</div>
+  <div class="login-sub">¿Quién eres?</div>
+  <div class="profiles">
+    <div class="profile-btn" onclick="selectProfile('diego')">
+      <div class="profile-avatar" style="background:#2d6a4f;">D</div>
+      <div class="profile-name">Diego</div>
+    </div>
+    <div class="profile-btn" onclick="selectProfile('antonia')">
+      <div class="profile-avatar" style="background:#9b2226;">A</div>
+      <div class="profile-name">Antonia</div>
+    </div>
+  </div>
+</div>
+
+<!-- PIN -->
+<div id="pin-screen">
+  <div class="pin-title" id="pin-title">Ingresa tu PIN</div>
+  <div class="pin-sub" id="pin-sub"></div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-pad">
+    <div class="pin-key" onclick="pinPress('1')">1</div>
+    <div class="pin-key" onclick="pinPress('2')">2</div>
+    <div class="pin-key" onclick="pinPress('3')">3</div>
+    <div class="pin-key" onclick="pinPress('4')">4</div>
+    <div class="pin-key" onclick="pinPress('5')">5</div>
+    <div class="pin-key" onclick="pinPress('6')">6</div>
+    <div class="pin-key" onclick="pinPress('7')">7</div>
+    <div class="pin-key" onclick="pinPress('8')">8</div>
+    <div class="pin-key" onclick="pinPress('9')">9</div>
+    <div class="pin-key" onclick="pinClear()" style="font-size:13px;color:var(--text-muted);">borrar</div>
+    <div class="pin-key" onclick="pinPress('0')">0</div>
+    <div class="pin-key" onclick="pinBack()" style="font-size:18px;">⌫</div>
+  </div>
+  <button class="pin-back" onclick="goToLogin()">← Cambiar perfil</button>
+</div>
+
+<!-- LOADING -->
 <div id="loading-screen">
   <div class="brand">Finanzas</div>
   <div class="spinner"></div>
   <div class="sub">Cargando datos...</div>
 </div>
 
-<div id="config-banner">
-  ⚠️ Falta configurar Supabase. Reemplaza <strong>https://jpscjdumeuabnmwrsvki.supabase.co</strong> y <strong>sb_publishable_IwZo4Don2tmHyEuCQVOUXQ_GIEwvHjv</strong> en el código.
-  <a href="https://supabase.com" target="_blank">Ir a Supabase →</a>
-</div>
-
-<div class="topbar">
-  <span class="topbar-brand">Finanzas</span>
-  <div class="topbar-right">
-    <span class="topbar-meta" id="mes-label"></span>
-    <span class="sync-status sync-loading" id="sync-status">conectando...</span>
-  </div>
-</div>
-
-<div class="page">
-  <div class="metrics">
-    <div class="metric"><div class="lbl">Ingresos</div><div class="val green" id="m-income">$0</div></div>
-    <div class="metric"><div class="lbl">Gastos</div><div class="val red" id="m-expense">$0</div></div>
-    <div class="metric"><div class="lbl">Balance</div><div class="val" id="m-balance">$0</div></div>
-    <div class="metric"><div class="lbl">Ahorro + intereses</div><div class="val blue" id="m-saving">$0</div></div>
-  </div>
-
-  <div class="saving-section">
-    <div class="saving-header">
-      <div>
-        <div class="saving-header-title">Fondo de ahorro</div>
-        <div class="saving-header-sub">15% anual · interés compuesto mensual</div>
-      </div>
-      <div class="saving-stats">
-        <div class="sstat"><div class="sl">Depositado</div><div class="sv" id="sav-principal">$0</div></div>
-        <div class="sstat"><div class="sl">Intereses</div><div class="sv earn" id="sav-earn">+$0</div></div>
-        <div class="sstat"><div class="sl">Valor actual</div><div class="sv" id="sav-total">$0</div></div>
-      </div>
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-brand">Finanzas</span>
+      <span class="topbar-profile" id="topbar-profile"></span>
     </div>
-    <div class="saving-body">
-      <div class="saving-actions">
-        <div class="sav-form-group">
-          <span class="sav-form-label">Depositar al ahorro</span>
-          <div class="sav-inputs">
-            <input type="number" id="sav-in-amt" placeholder="Monto" min="0" step="0.01"/>
-            <input type="date" id="sav-in-date"/>
-          </div>
-          <input type="text" id="sav-in-desc" placeholder="Descripción (ej. Quincena)" style="width:100%;"/>
-          <button class="btn-sav btn-deposit" onclick="savingMove('deposito')">+ Depositar</button>
+    <div class="topbar-right">
+      <span class="topbar-meta" id="mes-label"></span>
+      <span class="sync-status sync-loading" id="sync-status">conectando...</span>
+      <button class="btn-logout" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="metrics">
+      <div class="metric"><div class="lbl">Ingresos</div><div class="val green" id="m-income">$0</div></div>
+      <div class="metric"><div class="lbl">Gastos</div><div class="val red" id="m-expense">$0</div></div>
+      <div class="metric"><div class="lbl">Balance</div><div class="val" id="m-balance">$0</div></div>
+      <div class="metric"><div class="lbl">Ahorro + intereses</div><div class="val blue" id="m-saving">$0</div></div>
+    </div>
+
+    <div class="saving-section">
+      <div class="saving-header">
+        <div>
+          <div class="saving-header-title">Fondo de ahorro</div>
+          <div class="saving-header-sub">15% anual · interés compuesto mensual</div>
         </div>
-        <div class="sav-form-group">
-          <span class="sav-form-label">Retirar del ahorro</span>
-          <div class="sav-inputs">
-            <input type="number" id="sav-out-amt" placeholder="Monto" min="0" step="0.01"/>
-            <input type="date" id="sav-out-date"/>
-          </div>
-          <input type="text" id="sav-out-desc" placeholder="Descripción (ej. Vuelo)" style="width:100%;"/>
-          <button class="btn-sav btn-withdraw" onclick="savingMove('retiro')">− Retirar</button>
+        <div class="saving-stats">
+          <div class="sstat"><div class="sl">Depositado</div><div class="sv" id="sav-principal">$0</div></div>
+          <div class="sstat"><div class="sl">Intereses</div><div class="sv earn" id="sav-earn">+$0</div></div>
+          <div class="sstat"><div class="sl">Valor actual</div><div class="sv" id="sav-total">$0</div></div>
         </div>
       </div>
-      <div class="saving-divider"></div>
-      <div class="saving-log" id="sav-log"><p class="empty">Sin movimientos de ahorro aún</p></div>
-    </div>
-  </div>
-
-  <div class="main-grid">
-    <div class="card">
-      <div class="card-title">Agregar movimiento</div>
-      <div class="toggle-row">
-        <button class="toggle-btn active" id="btn-gasto" onclick="setType('gasto')">Gasto</button>
-        <button class="toggle-btn" id="btn-ingreso" onclick="setType('ingreso')">Ingreso</button>
+      <div class="saving-body">
+        <div class="saving-actions">
+          <div class="sav-form-group">
+            <span class="sav-form-label">Depositar al ahorro</span>
+            <div class="sav-inputs">
+              <input type="number" id="sav-in-amt" placeholder="Monto" min="0" step="0.01"/>
+              <input type="date" id="sav-in-date"/>
+            </div>
+            <input type="text" id="sav-in-desc" placeholder="Descripción (ej. Quincena)" style="width:100%;"/>
+            <button class="btn-sav btn-deposit" onclick="savingMove('deposito')">+ Depositar</button>
+          </div>
+          <div class="sav-form-group">
+            <span class="sav-form-label">Retirar del ahorro</span>
+            <div class="sav-inputs">
+              <input type="number" id="sav-out-amt" placeholder="Monto" min="0" step="0.01"/>
+              <input type="date" id="sav-out-date"/>
+            </div>
+            <input type="text" id="sav-out-desc" placeholder="Descripción (ej. Vuelo)" style="width:100%;"/>
+            <button class="btn-sav btn-withdraw" onclick="savingMove('retiro')">− Retirar</button>
+          </div>
+        </div>
+        <div class="saving-divider"></div>
+        <div class="saving-log" id="sav-log"><p class="empty">Sin movimientos de ahorro aún</p></div>
       </div>
-      <div class="form-row"><label>Descripción</label><input type="text" id="inp-desc" placeholder="Ej. Mercado"/></div>
-      <div class="form-row"><label>Monto ($)</label><input type="number" id="inp-amount" placeholder="0.00" min="0" step="0.01"/></div>
-      <div class="form-row" id="cat-row"><label>Categoría</label>
-        <select id="inp-cat">
-          <option>Comida</option><option>Transporte</option><option>Entretenimiento</option>
-          <option>Salud</option><option>Hogar</option><option>Ropa</option>
-          <option>Educación</option><option>Otro</option>
-        </select>
+    </div>
+
+    <div class="main-grid">
+      <div class="card">
+        <div class="card-title">Agregar movimiento</div>
+        <div class="toggle-row">
+          <button class="toggle-btn active" id="btn-gasto" onclick="setType('gasto')">Gasto</button>
+          <button class="toggle-btn" id="btn-ingreso" onclick="setType('ingreso')">Ingreso</button>
+        </div>
+        <div class="form-row"><label>Descripción</label><input type="text" id="inp-desc" placeholder="Ej. Mercado"/></div>
+        <div class="form-row"><label>Monto ($)</label><input type="number" id="inp-amount" placeholder="0.00" min="0" step="0.01"/></div>
+        <div class="form-row" id="cat-row"><label>Categoría</label>
+          <select id="inp-cat">
+            <option>Comida</option><option>Transporte</option><option>Entretenimiento</option>
+            <option>Salud</option><option>Hogar</option><option>Ropa</option>
+            <option>Educación</option><option>Otro</option>
+          </select>
+        </div>
+        <div class="form-row"><label>Fecha</label><input type="date" id="inp-date"/></div>
+        <button class="btn-add" id="btn-submit" onclick="addTransaction()">+ Agregar</button>
       </div>
-      <div class="form-row"><label>Fecha</label><input type="date" id="inp-date"/></div>
-      <button class="btn-add" id="btn-submit" onclick="addTransaction()">+ Agregar</button>
+      <div class="card">
+        <div class="card-title">Gastos por categoría</div>
+        <div class="cat-list" id="cat-list"><p class="empty">Sin gastos aún</p></div>
+      </div>
     </div>
-    <div class="card">
-      <div class="card-title">Gastos por categoría</div>
-      <div class="cat-list" id="cat-list"><p class="empty">Sin gastos aún</p></div>
-    </div>
-  </div>
 
-  <div class="chart-card">
-    <div class="card-title">Resumen mensual</div>
-    <div class="chart-legend">
-      <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f"></div>Ingresos</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#9b2226"></div>Gastos</div>
-      <div class="legend-item"><div class="legend-dot" style="background:#2563b0"></div>Ahorro acumulado</div>
+    <div class="chart-card">
+      <div class="card-title">Resumen mensual</div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f"></div>Ingresos</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#9b2226"></div>Gastos</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#2563b0"></div>Ahorro acumulado</div>
+      </div>
+      <div class="chart-wrap"><canvas id="monthly-chart"></canvas></div>
     </div>
-    <div class="chart-wrap"><canvas id="monthly-chart"></canvas></div>
-  </div>
 
-  <div class="tx-card">
-    <div class="card-title">Movimientos</div>
-    <div class="tx-list" id="tx-list"><p class="empty">Aún no hay movimientos</p></div>
+    <div class="tx-card">
+      <div class="card-title">Movimientos</div>
+      <div class="tx-list" id="tx-list"><p class="empty">Aún no hay movimientos</p></div>
+    </div>
   </div>
 </div>
 
 <script>
-// ─────────────────────────────────────────────
-// PASO 1: pega aquí tus credenciales de Supabase
 const SUPABASE_URL = 'https://jpscjdumeuabnmwrsvki.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_IwZo4Don2tmHyEuCQVOUXQ_GIEwvHjv';
-// ─────────────────────────────────────────────
+
+const PROFILES = {
+  diego:   { name: 'Diego',   pin: '2296', color: '#2d6a4f' },
+  antonia: { name: 'Antonia', pin: '2323', color: '#9b2226' }
+};
 
 const ANNUAL_RATE = 0.15;
 const MONTHLY_RATE = Math.pow(1 + ANNUAL_RATE, 1/12) - 1;
 const CAT_COLORS = {'Comida':'#2d6a4f','Transporte':'#2563b0','Entretenimiento':'#6d28d9','Salud':'#c05621','Hogar':'#92400e','Ropa':'#9d174d','Educación':'#3b6d11','Otro':'#7a7670'};
 const CAT_BG = {'Comida':'#eaf4ee','Transporte':'#e8f0fb','Entretenimiento':'#ede9fe','Salud':'#fef3ec','Hogar':'#fef3ec','Ropa':'#fce7f3','Educación':'#f0fae5','Otro':'#f0ede7'};
 
-let db = null, transactions = [], savings = [], txType = 'gasto', chartInstance = null, configured = false;
+let db = null, transactions = [], savings = [], txType = 'gasto', chartInstance = null;
+let currentProfile = null, pinBuffer = '';
 
+// ── PIN FLOW ──
+function selectProfile(id) {
+  currentProfile = id;
+  pinBuffer = '';
+  updatePinDots();
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-title').textContent = 'Ingresa tu PIN';
+  document.getElementById('pin-sub').textContent = PROFILES[id].name;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('pin-screen').style.display = 'flex';
+}
+
+function goToLogin() {
+  currentProfile = null; pinBuffer = '';
+  document.getElementById('pin-screen').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+function pinPress(d) {
+  if (pinBuffer.length >= 4) return;
+  pinBuffer += d;
+  updatePinDots();
+  if (pinBuffer.length === 4) setTimeout(checkPin, 150);
+}
+
+function pinBack() { pinBuffer = pinBuffer.slice(0,-1); updatePinDots(); }
+function pinClear() { pinBuffer = ''; updatePinDots(); }
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById('d'+i).className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+  }
+}
+
+function checkPin() {
+  if (pinBuffer === PROFILES[currentProfile].pin) {
+    document.getElementById('pin-screen').style.display = 'none';
+    document.getElementById('loading-screen').style.display = 'flex';
+    initApp();
+  } else {
+    pinBuffer = '';
+    updatePinDots();
+    document.getElementById('pin-error').textContent = 'PIN incorrecto, intenta de nuevo';
+    setTimeout(() => document.getElementById('pin-error').textContent = '', 2000);
+  }
+}
+
+function logout() {
+  currentProfile = null; pinBuffer = '';
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  transactions = []; savings = [];
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+}
+
+// ── APP INIT ──
 function setSyncStatus(s){const el=document.getElementById('sync-status');if(s==='ok'){el.textContent='sincronizado';el.className='sync-status sync-ok';}else if(s==='error'){el.textContent='sin conexión';el.className='sync-status sync-err';}else{el.textContent='sincronizando...';el.className='sync-status sync-loading';}}
+
+async function initApp() {
+  const p = PROFILES[currentProfile];
+  document.getElementById('topbar-profile').textContent = p.name;
+  document.getElementById('mes-label').textContent = new Date().toLocaleString('es-MX',{month:'long',year:'numeric'});
+  const today = new Date().toISOString().slice(0,10);
+  ['inp-date','sav-in-date','sav-out-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
+  setType('gasto');
+
+  try {
+    if (!db) db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    await loadAll();
+    db.channel('realtime_'+currentProfile)
+      .on('postgres_changes',{event:'*',schema:'public',table:'transactions'},loadAll)
+      .on('postgres_changes',{event:'*',schema:'public',table:'savings'},loadAll)
+      .subscribe();
+  } catch(e) { setSyncStatus('error'); }
+
+  document.getElementById('loading-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+}
+
+async function loadAll() {
+  setSyncStatus('loading');
+  const [t, s] = await Promise.all([
+    db.from('transactions').select('*').eq('profile', currentProfile).order('date',{ascending:false}),
+    db.from('savings').select('*').eq('profile', currentProfile).order('date',{ascending:false})
+  ]);
+  if (t.error || s.error) { setSyncStatus('error'); return; }
+  transactions = t.data || []; savings = s.data || [];
+  setSyncStatus('ok'); render();
+}
+
+// ── HELPERS ──
 function fmt(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-MX');}
 function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('es-MX',{day:'numeric',month:'short'});}
 function monthsBetween(ds,now){const d=new Date(ds+'T12:00:00');return(now.getFullYear()-d.getFullYear())*12+(now.getMonth()-d.getMonth());}
 function calcSavingsValue(asOf){const ref=asOf||new Date();let v=0;savings.forEach(s=>{const m=monthsBetween(s.date,ref);if(m<0)return;const g=s.amount*Math.pow(1+MONTHLY_RATE,m);v+=s.dir==='deposito'?g:-g;});return v;}
 function calcPrincipal(){return savings.reduce((a,s)=>a+(s.dir==='deposito'?s.amount:-s.amount),0);}
-
-async function init(){
-  if(!SUPABASE_URL||SUPABASE_URL==='https://jpscjdumeuabnmwrsvki.supabase.co'){
-    document.getElementById('config-banner').style.display='flex';
-    document.getElementById('loading-screen').style.display='none';
-    setSyncStatus('error');fallback();return;
-  }
-  try{
-    db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-    configured=true;
-    await loadAll();
-    setSyncStatus('ok');
-    db.channel('realtime').on('postgres_changes',{event:'*',schema:'public',table:'transactions'},loadAll).on('postgres_changes',{event:'*',schema:'public',table:'savings'},loadAll).subscribe();
-  }catch(e){setSyncStatus('error');fallback();}
-  document.getElementById('loading-screen').style.display='none';
-}
-
-function fallback(){
-  try{transactions=JSON.parse(localStorage.getItem('f_tx')||'[]');}catch(e){}
-  try{savings=JSON.parse(localStorage.getItem('f_sav')||'[]');}catch(e){}
-  document.getElementById('loading-screen').style.display='none';
-  render();
-}
-
-async function loadAll(){
-  setSyncStatus('loading');
-  const[t,s]=await Promise.all([db.from('transactions').select('*').order('date',{ascending:false}),db.from('savings').select('*').order('date',{ascending:false})]);
-  if(t.error||s.error){setSyncStatus('error');return;}
-  transactions=t.data||[];savings=s.data||[];
-  setSyncStatus('ok');render();
-}
-
 function setType(t){txType=t;document.getElementById('btn-gasto').className='toggle-btn'+(t==='gasto'?' active':'');document.getElementById('btn-ingreso').className='toggle-btn'+(t==='ingreso'?' active':'');document.getElementById('cat-row').style.display=t==='gasto'?'flex':'none';}
 
-async function savingMove(dir){
+// ── ACTIONS ──
+async function savingMove(dir) {
   const aId=dir==='deposito'?'sav-in-amt':'sav-out-amt',dId=dir==='deposito'?'sav-in-desc':'sav-out-desc',dtId=dir==='deposito'?'sav-in-date':'sav-out-date';
   const amount=parseFloat(document.getElementById(aId).value),desc=document.getElementById(dId).value.trim(),date=document.getElementById(dtId).value;
   if(!amount||amount<=0||!date)return alert('Ingresa monto y fecha.');
   if(dir==='retiro'){const cur=calcSavingsValue();if(amount>cur)return alert('Saldo insuficiente. Valor actual: '+fmt(cur));}
-  const row={dir,amount,desc:desc||(dir==='deposito'?'Depósito':'Retiro'),date};
+  const row={dir,amount,desc:desc||(dir==='deposito'?'Depósito':'Retiro'),date,profile:currentProfile};
   setSyncStatus('loading');
-  if(configured){const{error}=await db.from('savings').insert([row]);if(error){alert('Error: '+error.message);setSyncStatus('error');return;}}
-  else{savings.unshift({...row,id:Date.now()});localStorage.setItem('f_sav',JSON.stringify(savings));render();}
+  const{error}=await db.from('savings').insert([row]);
+  if(error){alert('Error: '+error.message);setSyncStatus('error');return;}
   document.getElementById(aId).value='';document.getElementById(dId).value='';
 }
 
-async function addTransaction(){
+async function addTransaction() {
   const desc=document.getElementById('inp-desc').value.trim(),amount=parseFloat(document.getElementById('inp-amount').value),cat=document.getElementById('inp-cat').value,date=document.getElementById('inp-date').value;
   if(!desc||!amount||amount<=0||!date)return alert('Completa todos los campos.');
-  const row={desc,amount,cat:txType==='gasto'?cat:'Ingreso',type:txType,date};
+  const row={desc,amount,cat:txType==='gasto'?cat:'Ingreso',type:txType,date,profile:currentProfile};
   const btn=document.getElementById('btn-submit');btn.disabled=true;setSyncStatus('loading');
-  if(configured){const{error}=await db.from('transactions').insert([row]);if(error){alert('Error: '+error.message);setSyncStatus('error');btn.disabled=false;return;}}
-  else{transactions.unshift({...row,id:Date.now()});localStorage.setItem('f_tx',JSON.stringify(transactions));render();}
+  const{error}=await db.from('transactions').insert([row]);
+  if(error){alert('Error: '+error.message);setSyncStatus('error');}
   document.getElementById('inp-desc').value='';document.getElementById('inp-amount').value='';btn.disabled=false;
 }
 
-async function deleteTx(id){
-  if(!confirm('¿Eliminar este movimiento?'))return;setSyncStatus('loading');
-  if(configured)await db.from('transactions').delete().eq('id',id);
-  else{transactions=transactions.filter(t=>t.id!=id);localStorage.setItem('f_tx',JSON.stringify(transactions));render();}
-}
+async function deleteTx(id){if(!confirm('¿Eliminar?'))return;setSyncStatus('loading');await db.from('transactions').delete().eq('id',id);}
+async function deleteSav(id){if(!confirm('¿Eliminar?'))return;setSyncStatus('loading');await db.from('savings').delete().eq('id',id);}
 
-async function deleteSav(id){
-  if(!confirm('¿Eliminar este movimiento de ahorro?'))return;setSyncStatus('loading');
-  if(configured)await db.from('savings').delete().eq('id',id);
-  else{savings=savings.filter(s=>s.id!=id);localStorage.setItem('f_sav',JSON.stringify(savings));render();}
-}
-
+// ── RENDER ──
 function render(){
   const now=new Date();
   const income=transactions.filter(t=>t.type==='ingreso').reduce((a,t)=>a+t.amount,0);
@@ -340,18 +466,12 @@ function render(){
   const mLabels=months.map(m=>{const[y,mo]=m.split('-');return new Date(+y,+mo-1).toLocaleString('es-MX',{month:'short',year:'2-digit'});});
   const savByMonth=months.map(m=>{const ref=new Date(m+'-28T12:00:00');return Math.round(Math.max(0,calcSavingsValue(ref)));});
   if(chartInstance)chartInstance.destroy();
-  if(months.length){chartInstance=new Chart(document.getElementById('monthly-chart'),{type:'bar',data:{labels:mLabels,datasets:[{label:'Ingresos',data:months.map(m=>Math.round(mm[m]?.i||0)),backgroundColor:'#2d6a4f',borderRadius:4},{label:'Gastos',data:months.map(m=>Math.round(mm[m]?.e||0)),backgroundColor:'#9b2226',borderRadius:4},{label:'Ahorro',data:savByMonth,backgroundColor:'#2563b0',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:12,family:'DM Sans'},autoSkip:false,maxRotation:40}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:12,family:'DM Sans'},callback:v=>'$'+v.toLocaleString('es-MX')}}}}})}
+  if(months.length){chartInstance=new Chart(document.getElementById('monthly-chart'),{type:'bar',data:{labels:mLabels,datasets:[{label:'Ingresos',data:months.map(m=>Math.round(mm[m]?.i||0)),backgroundColor:'#2d6a4f',borderRadius:4},{label:'Gastos',data:months.map(m=>Math.round(mm[m]?.e||0)),backgroundColor:'#9b2226',borderRadius:4},{label:'Ahorro',data:savByMonth,backgroundColor:'#2563b0',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:12,family:'DM Sans'},autoSkip:false,maxRotation:40}},y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{font:{size:12,family:'DM Sans'},callback:v=>'$'+v.toLocaleString('es-MX')}}}}});}
 
   const txEl=document.getElementById('tx-list');
   if(!transactions.length){txEl.innerHTML='<p class="empty">Aún no hay movimientos</p>';return;}
   txEl.innerHTML=transactions.slice(0,60).map(t=>{const col=t.type==='ingreso'?'#2d6a4f':(CAT_COLORS[t.cat]||'#888');const bg=t.type==='ingreso'?'#eaf4ee':(CAT_BG[t.cat]||'#f0ede7');return`<div class="tx-item"><div class="tx-left"><div class="tx-icon" style="background:${bg};color:${col};">${t.type==='ingreso'?'↑':'↓'}</div><div><div class="tx-desc">${t.desc}</div><div class="tx-cat">${t.cat} · ${fmtDate(t.date)}</div></div></div><div class="tx-right"><span class="tx-amount ${t.type==='ingreso'?'income':''}">${t.type==='ingreso'?'+':'−'}${fmt(t.amount)}</span><button class="btn-del" onclick="deleteTx('${t.id}')">×</button></div></div>`;}).join('');
 }
-
-const today=new Date().toISOString().slice(0,10);
-['inp-date','sav-in-date','sav-out-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
-document.getElementById('mes-label').textContent=new Date().toLocaleString('es-MX',{month:'long',year:'numeric'});
-setType('gasto');
-init();
 </script>
 </body>
 </html>
