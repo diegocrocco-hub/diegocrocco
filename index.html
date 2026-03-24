@@ -419,7 +419,7 @@ async function savingMove(dir) {
   const amount=parseFloat(document.getElementById(aId).value),desc=document.getElementById(dId).value.trim(),date=document.getElementById(dtId).value;
   if(!amount||amount<=0||!date)return alert('Ingresa monto y fecha.');
   if(dir==='retiro'){const cur=calcSavingsValue();if(amount>cur)return alert('Saldo insuficiente. Valor actual: '+fmt(cur));}
-  const row={dir,amount,desc:desc||(dir==='deposito'?'Depósito':'Retiro'),date,profile:currentProfile};
+  const row={dir,amount,description:description||(dir==='deposito'?'Depósito':'Retiro'),date,profile:currentProfile};
   setSyncStatus('loading');
   const{error}=await db.from('savings').insert([row]);
   if(error){alert('Error: '+error.message);setSyncStatus('error');return;}
@@ -429,7 +429,7 @@ async function savingMove(dir) {
 async function addTransaction() {
   const desc=document.getElementById('inp-desc').value.trim(),amount=parseFloat(document.getElementById('inp-amount').value),cat=document.getElementById('inp-cat').value,date=document.getElementById('inp-date').value;
   if(!desc||!amount||amount<=0||!date)return alert('Completa todos los campos.');
-  const row={desc,amount,cat:txType==='gasto'?cat:'Ingreso',type:txType,date,profile:currentProfile};
+  const row={description:desc,amount,cat:txType==='gasto'?cat:'Ingreso',type:txType,date,profile:currentProfile};
   const btn=document.getElementById('btn-submit');btn.disabled=true;setSyncStatus('loading');
   const{error}=await db.from('transactions').insert([row]);
   if(error){alert('Error: '+error.message);setSyncStatus('error');}
@@ -455,7 +455,7 @@ function render(){
 
   const savLogEl=document.getElementById('sav-log');
   if(!savings.length){savLogEl.innerHTML='<p class="empty">Sin movimientos de ahorro aún</p>';}
-  else{savLogEl.innerHTML=savings.slice(0,30).map(s=>{const m=monthsBetween(s.date,now);const g=s.amount*Math.pow(1+MONTHLY_RATE,Math.max(0,m));const diff=g-s.amount;const note=m>0&&s.dir==='deposito'?`<span class="slog-interest"> · +${fmt(diff)} interés</span>`:'';return`<div class="slog-item"><div class="slog-left"><span>${s.desc}</span><span class="slog-meta">${fmtDate(s.date)}${m>0?' · '+m+' mes'+(m===1?'':'es'):''}${note}</span></div><div class="slog-right"><span class="slog-amt ${s.dir==='deposito'?'in':'out'}">${s.dir==='deposito'?'+':'−'}${fmt(s.amount)}</span><button class="btn-del" onclick="deleteSav('${s.id}')">×</button></div></div>`;}).join('');}
+  else{savLogEl.innerHTML=savings.slice(0,30).map(s=>{const m=monthsBetween(s.date,now);const g=s.amount*Math.pow(1+MONTHLY_RATE,Math.max(0,m));const diff=g-s.amount;const note=m>0&&s.dir==='deposito'?`<span class="slog-interest"> · +${fmt(diff)} interés</span>`:'';return`<div class="slog-item"><div class="slog-left"><span>${s.description}</span><span class="slog-meta">${fmtDate(s.date)}${m>0?' · '+m+' mes'+(m===1?'':'es'):''}${note}</span></div><div class="slog-right"><span class="slog-amt ${s.dir==='deposito'?'in':'out'}">${s.dir==='deposito'?'+':'−'}${fmt(s.amount)}</span><button class="btn-del" onclick="deleteSav('${s.id}')">×</button></div></div>`;}).join('');}
 
   const catMap={};transactions.filter(t=>t.type==='gasto').forEach(t=>{catMap[t.cat]=(catMap[t.cat]||0)+t.amount;});
   const cats=Object.entries(catMap).sort((a,b)=>b[1]-a[1]),maxCat=cats[0]?cats[0][1]:1;
@@ -470,7 +470,7 @@ function render(){
 
   const txEl=document.getElementById('tx-list');
   if(!transactions.length){txEl.innerHTML='<p class="empty">Aún no hay movimientos</p>';return;}
-  txEl.innerHTML=transactions.slice(0,60).map(t=>{const col=t.type==='ingreso'?'#2d6a4f':(CAT_COLORS[t.cat]||'#888');const bg=t.type==='ingreso'?'#eaf4ee':(CAT_BG[t.cat]||'#f0ede7');return`<div class="tx-item"><div class="tx-left"><div class="tx-icon" style="background:${bg};color:${col};">${t.type==='ingreso'?'↑':'↓'}</div><div><div class="tx-desc">${t.desc}</div><div class="tx-cat">${t.cat} · ${fmtDate(t.date)}</div></div></div><div class="tx-right"><span class="tx-amount ${t.type==='ingreso'?'income':''}">${t.type==='ingreso'?'+':'−'}${fmt(t.amount)}</span><button class="btn-del" onclick="deleteTx('${t.id}')">×</button></div></div>`;}).join('');
+  txEl.innerHTML=transactions.slice(0,60).map(t=>{const col=t.type==='ingreso'?'#2d6a4f':(CAT_COLORS[t.cat]||'#888');const bg=t.type==='ingreso'?'#eaf4ee':(CAT_BG[t.cat]||'#f0ede7');return`<div class="tx-item"><div class="tx-left"><div class="tx-icon" style="background:${bg};color:${col};">${t.type==='ingreso'?'↑':'↓'}</div><div><div class="tx-desc">${t.description}</div><div class="tx-cat">${t.cat} · ${fmtDate(t.date)}</div></div></div><div class="tx-right"><span class="tx-amount ${t.type==='ingreso'?'income':''}">${t.type==='ingreso'?'+':'−'}${fmt(t.amount)}</span><button class="btn-del" onclick="deleteTx('${t.id}')">×</button></div></div>`;}).join('');
 }
 </script>
 </body>
